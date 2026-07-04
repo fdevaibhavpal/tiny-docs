@@ -1,0 +1,38 @@
+{
+  "version": 6,
+  "cmakeMinimumRequired": {
+    "major": 3,
+    "minor": 21,
+    "patch": 0
+  },
+  "configurePresets": [
+    {
+      "name": "server-debug",
+      "displayName": "Tiny Docs Server Debug",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/server/build",
+      "sourceDir": "${sourceDir}/server",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "CMAKE_TOOLCHAIN_FILE": "${sourceDir}/vcpkg/scripts/buildsystems/vcpkg.cmake",
+        "VCPKG_MANIFEST_DIR": "${sourceDir}",
+        "VCPKG_INSTALLED_DIR": "${sourceDir}/vcpkg_installed"
+      }
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "server-debug",
+      "configurePreset": "server-debug"
+    }
+  ],
+  "testPresets": [
+    {
+      "name": "server-debug",
+      "configurePreset": "server-debug",
+      "output": {
+        "outputOnFailure": true
+      }
+    }
+  ]
+}

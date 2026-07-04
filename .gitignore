@@ -1,0 +1,13 @@
+# Build outputs
+/server/build/
+/web/dist/
+/vcpkg/buildtrees/
+/vcpkg/downloads/
+/vcpkg/packages/
+/vcpkg_installed/
+/docs/
+
+
+.DS_Store
+.vscode/
+.idea/
