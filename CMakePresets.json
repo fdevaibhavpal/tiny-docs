@@ -11,10 +11,9 @@
       "displayName": "Tiny Docs Server Debug",
       "generator": "Ninja",
       "binaryDir": "${sourceDir}/server/build",
-      "sourceDir": "${sourceDir}/server",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Debug",
-        "CMAKE_TOOLCHAIN_FILE": "${sourceDir}/vcpkg/scripts/buildsystems/vcpkg.cmake",
+        "CMAKE_TOOLCHAIN_FILE": "/opt/vcpkg/scripts/buildsystems/vcpkg.cmake",
         "VCPKG_MANIFEST_DIR": "${sourceDir}",
         "VCPKG_INSTALLED_DIR": "${sourceDir}/vcpkg_installed"
       }
