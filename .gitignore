@@ -5,9 +5,15 @@
 /vcpkg/downloads/
 /vcpkg/packages/
 /vcpkg_installed/
+/compile_commands.json
+/CMakeUserPresets.json
 /docs/
 
+# Editor / language server cache
+/server/.cache/
+.cache/
+
+# macOS / IDE
 
 .DS_Store
 .vscode/
-.idea/
