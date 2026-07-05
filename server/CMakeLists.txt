@@ -17,6 +17,7 @@ add_library(
   tiny_docs_core
   core/document.cpp
   core/document_manager.cpp
+  engine/renderer.cpp
 )
 target_include_directories(tiny_docs_core PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_libraries(
@@ -36,6 +37,7 @@ add_executable(
   tiny_docs_tests
   tests/smoke_test.cpp
   tests/document_manager_test.cpp
+  tests/renderer_test.cpp
 )
 target_link_libraries(tiny_docs_tests PRIVATE GTest::gtest_main tiny_docs_core)
 
