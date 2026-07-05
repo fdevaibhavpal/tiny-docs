@@ -15,10 +15,13 @@ pkg_check_modules(QPDF REQUIRED IMPORTED_TARGET libqpdf)
 
 add_library(
   tiny_docs_core
+  core/annotation_store.cpp
   core/document.cpp
   core/document_manager.cpp
+  engine/annotation_writer.cpp
   engine/renderer.cpp
   engine/text_index.cpp
+  engine/search.cpp
 )
 target_include_directories(tiny_docs_core PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_libraries(
@@ -40,6 +43,9 @@ add_executable(
   tests/document_manager_test.cpp
   tests/renderer_test.cpp
   tests/text_index_test.cpp
+  tests/search_test.cpp
+  tests/annotation_store_test.cpp
+  tests/annotation_writer_test.cpp
 )
 target_link_libraries(tiny_docs_tests PRIVATE GTest::gtest_main tiny_docs_core)
 
