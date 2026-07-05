@@ -12,6 +12,16 @@ struct PageSize {
     int height {};
 };
 
+struct Span {
+    std::string text;
+    double x {};
+    double y {};
+    double width {};
+    double height {};
+    std::string font;
+    double size {};
+};
+
 struct DocumentMeta {
     DocId id;
     std::string path;
