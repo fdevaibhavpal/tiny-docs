@@ -181,6 +181,60 @@ void registerApiRoutes(const std::shared_ptr<AppState>& state) {
             callback(jsonResponse(value));
         },
         {Delete});
+
+    app().registerHandler(
+        "/documents/{1}/export",
+        [state](const HttpRequestPtr& request,
+                std::function<void(const HttpResponsePtr&)>&& callback,
+                const std::string& docId) {
+            auto store = state->findAnnotationStore(docId);
+            if (!store) {
+                callback(jsonResponse(errorJson("not_found", "unknown document"), k404NotFound));
+                return;
+            }
+
+            try {
+                const auto json = request->getJsonObject();
+                std::string outputPath;
+                if (json && (*json).isMember("outputPath") && (*json)["outputPath"].isString()) {
+                    outputPath = (*json)["outputPath"].asString();
+                }
+
+                const auto& document = state->documentManager.get(docId);
+                Json::Value value;
+                value["outputPath"] =
+                    state->annotationWriter.exportAnnotated(document, store->all(), outputPath);
+                callback(jsonResponse(value));
+            } catch (const std::out_of_range&) {
+                callback(jsonResponse(errorJson("not_found", "unknown document"), k404NotFound));
+            } catch (const std::invalid_argument& ex) {
+                callback(jsonResponse(errorJson("bad_request", ex.what()), k400BadRequest));
+            } catch (const std::exception& ex) {
+                callback(jsonResponse(errorJson("internal_error", ex.what()),
+                                      k500InternalServerError));
+            }
+        },
+        {Post});
+
+    app().registerHandler(
+        "/documents/{1}",
+        [state](const HttpRequestPtr&,
+                std::function<void(const HttpResponsePtr&)>&& callback,
+                const std::string& docId) {
+            try {
+                state->documentManager.get(docId);
+                state->documentManager.close(docId);
+                state->removeAnnotationStore(docId);
+
+                Json::Value value;
+                value["ok"] = true;
+                value["docId"] = docId;
+                callback(jsonResponse(value));
+            } catch (const std::out_of_range&) {
+                callback(jsonResponse(errorJson("not_found", "unknown document"), k404NotFound));
+            }
+        },
+        {Delete});
 }
 
 }  // namespace tiny_docs

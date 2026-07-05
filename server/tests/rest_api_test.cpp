@@ -1,3 +1,5 @@
+#include <filesystem>
+
 #include <gtest/gtest.h>
 
 #include "tests/http_test_support.hpp"
@@ -127,4 +129,95 @@ TEST(RestApi, CreatesListsAndDeletesAnnotations) {
     ASSERT_NE(afterDeleteJson, nullptr);
     ASSERT_TRUE((*afterDeleteJson)["annotations"].isArray());
     EXPECT_EQ((*afterDeleteJson)["annotations"].size(), 0U);
+}
+
+TEST(RestApi, ExportsAnnotatedPdfToNewPath) {
+    namespace fs = std::filesystem;
+
+    tiny_docs::test::TempPdfFile pdf("tiny_docs_export_route.pdf", tiny_docs::test::makeTextPdf());
+    const auto harness = tiny_docs::test::makeHarness();
+
+    Json::Value openBody;
+    openBody["path"] = pdf.path().string();
+    const auto opened = harness.postJson("/documents/open", openBody);
+    ASSERT_NE(opened, nullptr);
+    const auto openedJson = opened->getJsonObject();
+    ASSERT_NE(openedJson, nullptr);
+    const auto docId = (*openedJson)["docId"].asString();
+
+    Json::Value annotation;
+    annotation["id"] = "ann-export";
+    annotation["page"] = 1;
+    annotation["type"] = "highlight";
+    annotation["color"] = "#FFF200";
+    annotation["createdAt"] = "2026-07-05T12:00:00Z";
+    Json::Value rect(Json::arrayValue);
+    rect.append(10.0);
+    rect.append(20.0);
+    rect.append(30.0);
+    rect.append(12.0);
+    annotation["rects"].append(rect);
+    Json::Value quad(Json::arrayValue);
+    quad.append(10.0);
+    quad.append(32.0);
+    quad.append(40.0);
+    quad.append(32.0);
+    quad.append(10.0);
+    quad.append(20.0);
+    quad.append(40.0);
+    quad.append(20.0);
+    annotation["quadPoints"].append(quad);
+
+    const auto created = harness.postJson("/documents/" + docId + "/annotations", annotation);
+    ASSERT_NE(created, nullptr);
+    ASSERT_EQ(created->statusCode(), drogon::k200OK);
+
+    Json::Value exportBody;
+    const auto exported = harness.postJson("/documents/" + docId + "/export", exportBody);
+
+    ASSERT_NE(exported, nullptr);
+    ASSERT_EQ(exported->statusCode(), drogon::k200OK);
+    const auto exportedJson = exported->getJsonObject();
+    ASSERT_NE(exportedJson, nullptr);
+    const auto outputPath = (*exportedJson)["outputPath"].asString();
+    EXPECT_FALSE(outputPath.empty());
+    EXPECT_NE(outputPath, pdf.path().string());
+    EXPECT_TRUE(fs::exists(outputPath));
+
+    std::error_code ec;
+    fs::remove(outputPath, ec);
+}
+
+TEST(RestApi, ClosesDocumentSession) {
+    tiny_docs::test::TempPdfFile pdf("tiny_docs_close_route.pdf", tiny_docs::test::makeMinimalPdf());
+    const auto harness = tiny_docs::test::makeHarness();
+
+    Json::Value body;
+    body["path"] = pdf.path().string();
+    const auto opened = harness.postJson("/documents/open", body);
+    ASSERT_NE(opened, nullptr);
+    const auto openedJson = opened->getJsonObject();
+    ASSERT_NE(openedJson, nullptr);
+    const auto docId = (*openedJson)["docId"].asString();
+
+    const auto closed = harness.del("/documents/" + docId);
+
+    ASSERT_NE(closed, nullptr);
+    ASSERT_EQ(closed->statusCode(), drogon::k200OK);
+
+    const auto missing = harness.get("/documents/" + docId + "/annotations");
+    ASSERT_NE(missing, nullptr);
+    EXPECT_EQ(missing->statusCode(), drogon::k404NotFound);
+}
+
+TEST(RestApi, RejectsMissingSearchQuery) {
+    const auto harness = tiny_docs::test::makeHarness();
+
+    const auto response = harness.get("/documents/any-doc/search");
+
+    ASSERT_NE(response, nullptr);
+    ASSERT_EQ(response->statusCode(), drogon::k400BadRequest);
+    const auto json = response->getJsonObject();
+    ASSERT_NE(json, nullptr);
+    EXPECT_EQ((*json)["error"].asString(), "bad_request");
 }
